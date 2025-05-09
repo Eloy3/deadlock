@@ -1,0 +1,12 @@
+shared int x = 0;
+
+thread t1 {
+    lock(m);
+    x = x + 1;
+    print(x);
+    unlock(m);
+}
+
+thread t2 {
+    x = x + 2;
+}

@@ -8,7 +8,6 @@ import (
 )
 
 func main() {
-	fmt.Println("Hulloooo")
 
 	f, err := os.Open("simdata/examples/example01.dlk")
 	if err != nil {
@@ -16,22 +15,21 @@ func main() {
 		return
 	}
 	defer f.Close()
-	// Read the file and process it
-	// For example, you can read the file line by line
+
 	scanner := bufio.NewScanner(f)
+	nline := 0
 	for scanner.Scan() {
 		line := scanner.Text()
-		tokens := language.Tokenize(line)
-		fmt.Println("line: ", tokens, "\n")
-		for i, token := range tokens {
-			fmt.Printf("Token %d: %s\n", i, token)
+		fmt.Println("line: ", line)
+		tokens, _ := language.TokenizeLine(line, nline)
+		for _, token := range tokens {
+			fmt.Printf("Token: Type=%s, Value=%s\n", token.Type, token.Value)
 		}
-
+		nline++
 	}
 	if err := scanner.Err(); err != nil {
 		fmt.Println("Error reading file:", err)
 		return
 	}
-	// Example of using the Tokenize function
 
 }

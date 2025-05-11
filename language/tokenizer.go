@@ -28,6 +28,12 @@ func TokenizeLine(line string, lineNum int) ([]Token, error) {
 			tokens = append(tokens, Token{Type: SYMBOL, Value: string(ch)})
 			i++
 
+		case isDigit(ch):
+			start := i
+			for i < len(line) && isDigit(rune(line[i])) {
+				i++
+			}
+			tokens = append(tokens, Token{Type: NUMBER, Value: line[start:i]})
 		default:
 			i++
 			tokens = append(tokens, Token{Type: STRING, Value: string(ch)})

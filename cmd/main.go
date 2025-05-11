@@ -18,11 +18,13 @@ func main() {
 
 	scanner := bufio.NewScanner(f)
 	nline := 0
+	tokens := []language.Token{}
 	for scanner.Scan() {
 		line := scanner.Text()
 		fmt.Println("line: ", line)
-		tokens, _ := language.TokenizeLine(line, nline)
-		for _, token := range tokens {
+		lineTokens, _ := language.TokenizeLine(line, nline)
+		for _, token := range lineTokens {
+			tokens = append(tokens, token)
 			fmt.Printf("Token: Type=%s, Value=%s\n", token.Type, token.Value)
 		}
 		nline++
@@ -32,4 +34,6 @@ func main() {
 		return
 	}
 
+	parser := language.NewParser(tokens)
+	parser.ParseProgram()
 }

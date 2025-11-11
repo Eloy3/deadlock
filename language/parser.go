@@ -27,11 +27,13 @@ func (p *Parser) ParseProgram() []ast.Statement {
 }
 
 func (p *Parser) parseStatement() ast.Statement {
-	switch p.peek().Type {
+	token := p.peek()
+	switch token.Type {
 	case KEYWORD:
-		switch p.peek().Value {
+		switch token.Value {
 		case "shared":
-			return p.parseVarDecl()
+			p.current++
+			return p.parseVarDecl(token, true)
 		default:
 			p.error("Unexpected keyword")
 		}
@@ -41,8 +43,21 @@ func (p *Parser) parseStatement() ast.Statement {
 	return nil
 }
 
-func (p *Parser) parseVarDecl() ast.Statement {
-	panic("unimplemented")
+func (p *Parser) parseVarDecl(token Token, shared bool) ast.Statement {
+	var t []Token
+	for token.Type != ENDSTMT {
+		t = append(t, token)
+		token = p.peek()
+		p.current++
+	}
+	vdecl := ast.VarDecl{
+		Shared: shared,
+		Type:   string(t[1].Value),
+		Name:   t[2].Value,
+		Value:  p.parseExpression(),
+	}
+
+	return vdecl
 }
 
 func (p *Parser) error(s string) {
@@ -55,4 +70,21 @@ func (p *Parser) peek() Token {
 
 func (p *Parser) isAtEnd() bool {
 	return p.peek().Type == EOF
+}
+
+func (p *Parser) advance() Token {
+	if !p.isAtEnd() {
+		p.current++
+	}
+	return p.peek()
+}
+
+func (p *Parser) parseExpression() ast.Expression {
+	// Placeholder for now: return literal expression if the next token is a number
+	tok := p.advance()
+	if tok.Type == NUMBER {
+		//return &ast.Literal{Value: tok.Value}
+	}
+	p.error("Expected expression")
+	return nil
 }

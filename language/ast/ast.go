@@ -15,11 +15,12 @@ type VarDecl struct {
 	Value  Expression
 }
 
-func (vd *VarDecl) stmt() {}
+func (vd VarDecl) stmt() {}
 
 type Assignment struct {
-	Name  string
-	Value Expression
+	Name   string
+	Value  Expression
+	Shared bool
 }
 
 type LockStmt struct {

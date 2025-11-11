@@ -11,6 +11,7 @@ const (
 	OPERATOR   TokenType = "OPERATOR"
 	SYMBOL     TokenType = "SYMBOL"
 	COMMENT    TokenType = "COMMENT"
+	ENDSTMT    TokenType = "ENDSTMT"
 )
 
 type Token struct {

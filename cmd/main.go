@@ -2,14 +2,18 @@ package main
 
 import (
 	"bufio"
-	"deadlock/language"
 	"fmt"
 	"os"
+
+	"deadlock/language"
 )
 
 func main() {
 
-	f, err := os.Open("simdata/examples/example01.dlk")
+	dir, _ := os.Getwd()
+	fmt.Println("Working directory:", dir)
+
+	f, err := os.Open("../simdata/examples/example01.dlk")
 	if err != nil {
 		fmt.Println("Error opening file:", err)
 		return

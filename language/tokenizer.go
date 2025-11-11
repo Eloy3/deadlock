@@ -12,7 +12,7 @@ func TokenizeLine(line string, lineNum int) ([]Token, error) {
 			i++
 
 		case ch == ';':
-			tokens = append(tokens, Token{Type: SYMBOL, Value: string(ch)})
+			tokens = append(tokens, Token{Type: ENDSTMT, Value: string(ch)})
 			i++
 
 		case isLetter(ch):
@@ -51,7 +51,6 @@ func isDigit(ch rune) bool {
 	return ch >= '0' && ch <= '9'
 }
 
-// int x
 func readId(line string) (string, int) {
 	for i, ch := range line {
 		if !isLetter(ch) && !isDigit(ch) {

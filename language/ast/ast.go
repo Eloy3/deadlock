@@ -1,12 +1,44 @@
 package ast
 
+type Node interface {
+	TokenLiteral() string
+}
+
 type Statement interface {
+	Node
 	stmt()
 }
 
 type Expression interface {
 	expr()
 }
+
+type NumberLiteral struct {
+	Value string
+}
+
+func (nl NumberLiteral) expr() {}
+
+type Identifier struct {
+	Name string
+}
+
+func (id Identifier) expr() {}
+
+type BinaryOp struct {
+	Left     Expression
+	Operator string
+	Right    Expression
+}
+
+func (bo BinaryOp) expr() {}
+
+type FunctionCall struct {
+	Name string
+	Args []Expression
+}
+
+func (fc FunctionCall) expr() {}
 
 type VarDecl struct {
 	Shared bool
@@ -15,7 +47,8 @@ type VarDecl struct {
 	Value  Expression
 }
 
-func (vd VarDecl) stmt() {}
+func (vd VarDecl) TokenLiteral() {}
+func (vd VarDecl) stmt()         {}
 
 type Assignment struct {
 	Name   string

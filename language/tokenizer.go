@@ -18,9 +18,9 @@ func TokenizeLine(line string, lineNum int) ([]Token, error) {
 		case isLetter(ch):
 			id, length := readId(line[i:])
 			if keywords[id] {
-				tokens = append(tokens, Token{Type: KEYWORD, Value: id})
+				tokens = append(tokens, Token{Type: KEYWORD, Value: id, Line: lineNum})
 			} else {
-				tokens = append(tokens, Token{Type: IDENTIFIER, Value: id})
+				tokens = append(tokens, Token{Type: IDENTIFIER, Value: id, Line: lineNum})
 			}
 			i += length
 
@@ -58,5 +58,4 @@ func readId(line string) (string, int) {
 		}
 	}
 	return line, len(line)
-
 }

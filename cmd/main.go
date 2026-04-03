@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"deadlock/language"
+	"deadlock/language/parser"
+	"deadlock/language/token"
 )
 
 func main() {
@@ -22,14 +23,14 @@ func main() {
 
 	scanner := bufio.NewScanner(f)
 	nline := 0
-	tokens := []language.Token{}
+	tokens := []token.Token{}
 	for scanner.Scan() {
 		line := scanner.Text()
 		fmt.Println("line: ", line)
-		lineTokens, _ := language.TokenizeLine(line, nline)
+		lineTokens, _ := token.TokenizeLine(line, nline)
 		for _, token := range lineTokens {
 			tokens = append(tokens, token)
-			fmt.Printf("Token: Type=%s, Value=%s\n", token.Type, token.Value)
+			fmt.Printf("Token: Type=%s, Value=%s\n", token.Type, token.Literal)
 		}
 		nline++
 	}
@@ -38,6 +39,6 @@ func main() {
 		return
 	}
 
-	parser := language.NewParser(tokens)
+	parser := parser.NewParser(tokens)
 	parser.ParseProgram()
 }

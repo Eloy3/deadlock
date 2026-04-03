@@ -1,4 +1,4 @@
-package language
+package token
 
 func TokenizeLine(line string, lineNum int) ([]Token, error) {
 	tokens := []Token{}
@@ -12,20 +12,25 @@ func TokenizeLine(line string, lineNum int) ([]Token, error) {
 			i++
 
 		case ch == ';':
-			tokens = append(tokens, Token{Type: ENDSTMT, Value: string(ch)})
+			tokens = append(tokens, Token{Type: SEMICOLON, Literal: string(ch)})
 			i++
 
 		case isLetter(ch):
 			id, length := readId(line[i:])
-			if keywords[id] {
-				tokens = append(tokens, Token{Type: KEYWORD, Value: id, Line: lineNum})
+			value, exists := keywords[id]
+			if exists {
+				tokens = append(tokens, Token{Type: value, Literal: id, Line: lineNum})
 			} else {
-				tokens = append(tokens, Token{Type: IDENTIFIER, Value: id, Line: lineNum})
+				tokens = append(tokens, Token{Type: IDENTIFIER, Literal: id, Line: lineNum})
 			}
 			i += length
 
 		case symbols[ch]:
-			tokens = append(tokens, Token{Type: SYMBOL, Value: string(ch)})
+			if ch == '=' {
+				tokens = append(tokens, Token{Type: EQUALS, Literal: string(ch)})
+			} else {
+				tokens = append(tokens, Token{Type: SYMBOL, Literal: string(ch)})
+			}
 			i++
 
 		case isDigit(ch):
@@ -33,10 +38,10 @@ func TokenizeLine(line string, lineNum int) ([]Token, error) {
 			for i < len(line) && isDigit(rune(line[i])) {
 				i++
 			}
-			tokens = append(tokens, Token{Type: NUMBER, Value: line[start:i]})
+			tokens = append(tokens, Token{Type: NUMBER, Literal: line[start:i]})
 		default:
 			i++
-			tokens = append(tokens, Token{Type: STRING, Value: string(ch)})
+			tokens = append(tokens, Token{Type: STRING, Literal: string(ch)})
 		}
 
 	}

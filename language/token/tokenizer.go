@@ -1,5 +1,27 @@
 package token
 
+import (
+	"strings"
+)
+
+func TokenizeProgram(content string) ([]Token, error) {
+	tokens := []Token{}
+	lines := strings.Split(content, "\n")
+	
+	for lineNum, line := range lines {
+		lineTokens, err := TokenizeLine(line, lineNum)
+		if err != nil {
+			return tokens, err
+		}
+		tokens = append(tokens, lineTokens...)
+	}
+	
+	// Append EOF token
+	tokens = append(tokens, Token{Type: EOF, Literal: "EOF", Line: len(lines)})
+	
+	return tokens, nil
+}
+
 func TokenizeLine(line string, lineNum int) ([]Token, error) {
 	tokens := []Token{}
 	i := 0

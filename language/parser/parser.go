@@ -25,7 +25,11 @@ const (
 	PREFIX       // -X or !X
 	CALL         // myFunction(X)
 	INDEX        // array[index]
+)
 
+type (
+	prefixParseFn func() ast.Expression
+	infixParseFn  func(ast.Expression) ast.Expression
 )
 
 var precedences = map[token.TokenType]int{
@@ -58,19 +62,29 @@ type Parser struct {
 	tokens  []token.Token
 	errors  []string
 	current int
+
+	prefixParseFns map[token.TokenType]prefixParseFn
+	infixParseFns  map[token.TokenType]infixParseFn
 }
 
 func NewParser(tokens []token.Token) *Parser {
-	return &Parser{
+	parser := &Parser{
 		tokens:  tokens,
 		current: 0,
+		errors:  []string{},
 	}
+	parser.prefixParseFns = make(map[token.TokenType]prefixParseFn)
+	parser.registerPrefix(token.IDENTIFIER, parser.parseIdentifier)
+	return parser
 }
 
 func (p *Parser) ParseProgram() []ast.Statement {
 	var statements []ast.Statement
 	for !p.isAtEnd() {
 		stmt := p.parseStatement()
+		if stmt == nil {
+			return nil
+		}
 		statements = append(statements, stmt)
 	}
 	return statements
@@ -83,9 +97,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		tok = p.advance()
 		return p.parseVarDecl(true)
 	default:
-		p.error("Unexpected token")
+		return p.parseExpressionStatement()
 	}
-	return nil
 }
 
 func (p *Parser) parseVarDecl(shared bool) *ast.VariableDeclaration {
@@ -109,19 +122,34 @@ func (p *Parser) parseVarDecl(shared bool) *ast.VariableDeclaration {
 	return stmt
 }
 
-func (p *Parser) parseIdentifier() ast.Identifier {
+func (p *Parser) parseIdentifier() ast.Expression {
 	var identifier ast.Identifier
-	identifier.Token = p.peekN(p.current)
-	identifier.Value = p.peekN(p.current).Literal
-	return identifier
+	identifier.Token = p.peekN(0)
+	identifier.Value = p.peekN(0).Literal
+	return &identifier
 }
 
-func (p *Parser) parseExpression() ast.Expression {
+func (p *Parser) parseExpression(precedence int) ast.Expression {
 	var currentToken = p.peekN(0)
-	if currentToken.Type == token.NUMBER {
+	prefix := p.prefixParseFns[currentToken.Type]
+	if prefix == nil {
 		return nil
 	}
-	return nil
+	leftExp := prefix()
+
+	return leftExp
+}
+
+func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+	stmt := &ast.ExpressionStatement{Token: p.peekN(0)}
+
+	stmt.Expression = p.parseExpression(LOWEST)
+
+	if p.peekNtokenIs(1, token.SEMICOLON) {
+		p.advance()
+	}
+
+	return stmt
 }
 
 func (p *Parser) error(s string) {
@@ -149,4 +177,16 @@ func (p *Parser) advance() token.Token {
 
 func isOperator(s string) bool {
 	return s == "+" || s == "-" || s == "*" || s == "/" || s == "="
+}
+
+func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
+	p.prefixParseFns[tokenType] = fn
+}
+
+func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
+	p.infixParseFns[tokenType] = fn
+}
+
+func (p *Parser) Errors() []string {
+	return p.errors
 }

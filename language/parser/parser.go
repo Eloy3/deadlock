@@ -197,10 +197,6 @@ func (p *Parser) advance() token.Token {
 	return p.peekN(0)
 }
 
-func isOperator(s string) bool {
-	return s == "+" || s == "-" || s == "*" || s == "/" || s == "="
-}
-
 func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
 	p.prefixParseFns[tokenType] = fn
 }

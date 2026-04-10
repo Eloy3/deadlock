@@ -51,6 +51,15 @@ func (id *Identifier) TokenLiteral() string { return id.Token.Literal }
 func (id *Identifier) expr()                {}
 func (id *Identifier) String() string       { return id.Value }
 
+type IntegerLiteral struct {
+	Token token.Token
+	Value int64
+}
+
+func (il *IntegerLiteral) expr()                {}
+func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Literal }
+func (il *IntegerLiteral) String() string       { return il.Token.Literal }
+
 type FunctionCall struct {
 	Name string
 	Args []Expression

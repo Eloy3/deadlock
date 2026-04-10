@@ -4,6 +4,7 @@ import (
 	"deadlock/language/ast"
 	"deadlock/language/token"
 	"fmt"
+	"strconv"
 )
 
 const (
@@ -73,8 +74,11 @@ func NewParser(tokens []token.Token) *Parser {
 		current: 0,
 		errors:  []string{},
 	}
+
 	parser.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	parser.registerPrefix(token.IDENTIFIER, parser.parseIdentifier)
+	parser.registerPrefix(token.INT, parser.parseIntegerLiteral)
+
 	return parser
 }
 
@@ -99,6 +103,29 @@ func (p *Parser) parseStatement() ast.Statement {
 	default:
 		return p.parseExpressionStatement()
 	}
+}
+
+func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+	stmt := &ast.ExpressionStatement{Token: p.peekN(0)}
+
+	stmt.Expression = p.parseExpression(LOWEST)
+
+	if p.peekNtokenIs(1, token.SEMICOLON) {
+		p.advance()
+	}
+
+	return stmt
+}
+
+func (p *Parser) parseExpression(precedence int) ast.Expression {
+	var currentToken = p.peekN(0)
+	prefix := p.prefixParseFns[currentToken.Type]
+	if prefix == nil {
+		return nil
+	}
+	leftExp := prefix()
+
+	return leftExp
 }
 
 func (p *Parser) parseVarDecl(shared bool) *ast.VariableDeclaration {
@@ -129,27 +156,22 @@ func (p *Parser) parseIdentifier() ast.Expression {
 	return &identifier
 }
 
-func (p *Parser) parseExpression(precedence int) ast.Expression {
-	var currentToken = p.peekN(0)
-	prefix := p.prefixParseFns[currentToken.Type]
-	if prefix == nil {
+func (p *Parser) parseIntegerLiteral() ast.Expression {
+
+	curToken := p.peekN(0)
+
+	lit := &ast.IntegerLiteral{Token: curToken}
+
+	value, err := strconv.ParseInt(curToken.Literal, 0, 64)
+	if err != nil {
+		msg := fmt.Sprintf("could not parse %q as integer", curToken.Literal)
+		p.errors = append(p.errors, msg)
 		return nil
 	}
-	leftExp := prefix()
 
-	return leftExp
-}
+	lit.Value = value
 
-func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
-	stmt := &ast.ExpressionStatement{Token: p.peekN(0)}
-
-	stmt.Expression = p.parseExpression(LOWEST)
-
-	if p.peekNtokenIs(1, token.SEMICOLON) {
-		p.advance()
-	}
-
-	return stmt
+	return lit
 }
 
 func (p *Parser) error(s string) {

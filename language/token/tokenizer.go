@@ -7,7 +7,7 @@ import (
 func TokenizeProgram(content string) ([]Token, error) {
 	tokens := []Token{}
 	lines := strings.Split(content, "\n")
-	
+
 	for lineNum, line := range lines {
 		lineTokens, err := TokenizeLine(line, lineNum)
 		if err != nil {
@@ -15,10 +15,10 @@ func TokenizeProgram(content string) ([]Token, error) {
 		}
 		tokens = append(tokens, lineTokens...)
 	}
-	
+
 	// Append EOF token
 	tokens = append(tokens, Token{Type: EOF, Literal: "EOF", Line: len(lines)})
-	
+
 	return tokens, nil
 }
 
@@ -47,14 +47,16 @@ func TokenizeLine(line string, lineNum int) ([]Token, error) {
 			}
 			i += length
 
-		case symbols[ch]:
-			if ch == '=' {
-				tokens = append(tokens, Token{Type: EQUALS, Literal: string(ch)})
-			} else {
-				tokens = append(tokens, Token{Type: SYMBOL, Literal: string(ch)})
-			}
-			i++
+		case ch == '=':
+			tokens = append(tokens, Token{Type: EQUALS, Literal: string(ch)})
 
+		case ch == '!':
+			next := rune(line[i+1])
+			if next == '=' {
+				tokens = append(tokens, Token{Type: NOT_EQUALS, Literal: string(ch)})
+			}
+			tokens = append(tokens, Token{Type: NOT, Literal: string(ch)})
+			i++
 		case isDigit(ch):
 			start := i
 			for i < len(line) && isDigit(rune(line[i])) {

@@ -30,7 +30,6 @@ const (
 
 	SYMBOL  = "SYMBOL"
 	COMMENT = "COMMENT"
-	ENDSTMT = "ENDSTMT"
 
 	COMMA     = ","
 	SEMICOLON = ";"
@@ -60,11 +59,6 @@ type Token struct {
 var keywords = map[string]TokenType{
 	"shared": SHARED, "int": INT, "thread": THREAD,
 	"lock": LOCK, "unlock": UNLOCK, "print": PRINT,
-}
-
-var symbols = map[rune]bool{
-	'=': true, '+': true, '-': true, '*': true, '/': true,
-	';': true, '{': true, '}': true, '(': true, ')': true,
 }
 
 func isWhitespace(ch rune) bool {

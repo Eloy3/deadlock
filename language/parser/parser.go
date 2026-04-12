@@ -77,7 +77,9 @@ func NewParser(tokens []token.Token) *Parser {
 
 	parser.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	parser.registerPrefix(token.IDENTIFIER, parser.parseIdentifier)
-	parser.registerPrefix(token.INT, parser.parseIntegerLiteral)
+	parser.registerPrefix(token.NUMBER, parser.parseIntegerLiteral)
+	parser.registerPrefix(token.NOT, parser.parsePrefixExpression)
+	parser.registerPrefix(token.MINUS, parser.parsePrefixExpression)
 
 	return parser
 }
@@ -90,6 +92,7 @@ func (p *Parser) ParseProgram() []ast.Statement {
 			return nil
 		}
 		statements = append(statements, stmt)
+		p.advance()
 	}
 	return statements
 }
@@ -118,14 +121,24 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 }
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
-	var currentToken = p.peekN(0)
-	prefix := p.prefixParseFns[currentToken.Type]
+	var curToken = p.peekN(0)
+	prefix := p.prefixParseFns[curToken.Type]
 	if prefix == nil {
+		p.noPrefixParseFnError(curToken.Type)
 		return nil
 	}
 	leftExp := prefix()
-
+	if leftExp == nil {
+		msg := fmt.Sprintf("could not parse expression after %q", curToken.Literal)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
 	return leftExp
+}
+
+func (p *Parser) noPrefixParseFnError(t token.TokenType) {
+	msg := fmt.Sprintf("no prefix parse function for %s found", t)
+	p.errors = append(p.errors, msg)
 }
 
 func (p *Parser) parseVarDecl(shared bool) *ast.VariableDeclaration {
@@ -172,6 +185,25 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 	lit.Value = value
 
 	return lit
+}
+
+func (p *Parser) parsePrefixExpression() ast.Expression {
+	curToken := p.peekN(0)
+	expression := &ast.PrefixExpression{
+		Token:    curToken,
+		Operator: curToken.Literal,
+	}
+	p.advance()
+
+	right := p.parseExpression(PREFIX)
+	if right == nil {
+		msg := fmt.Sprintf("could not parse expression after %q", curToken.Literal)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	expression.Right = right
+
+	return expression
 }
 
 func (p *Parser) error(s string) {

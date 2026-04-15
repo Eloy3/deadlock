@@ -81,6 +81,16 @@ func NewParser(tokens []token.Token) *Parser {
 	parser.registerPrefix(token.NOT, parser.parsePrefixExpression)
 	parser.registerPrefix(token.MINUS, parser.parsePrefixExpression)
 
+	parser.infixParseFns = make(map[token.TokenType]infixParseFn)
+	parser.registerInfix(token.PLUS, parser.parseInfixExpression)
+	parser.registerInfix(token.MINUS, parser.parseInfixExpression)
+	parser.registerInfix(token.DIVIDE, parser.parseInfixExpression)
+	parser.registerInfix(token.MULTIPLY, parser.parseInfixExpression)
+	parser.registerInfix(token.EQUALS, parser.parseInfixExpression)
+	parser.registerInfix(token.NOT_EQUALS, parser.parseInfixExpression)
+	parser.registerInfix(token.LESS_GREATER, parser.parseInfixExpression)
+	parser.registerInfix(token.GREATER, parser.parseInfixExpression)
+
 	return parser
 }
 
@@ -128,11 +138,18 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 		return nil
 	}
 	leftExp := prefix()
-	if leftExp == nil {
-		msg := fmt.Sprintf("could not parse expression after %q", curToken.Literal)
-		p.errors = append(p.errors, msg)
-		return nil
+
+	for !p.peekNtokenIs(0, token.SEMICOLON) && precedence < p.peekPrecedence(1) {
+		infix := p.infixParseFns[p.peekN(1).Type]
+		if infix == nil {
+			return leftExp
+		}
+
+		p.advance()
+
+		leftExp = infix(leftExp)
 	}
+
 	return leftExp
 }
 
@@ -206,16 +223,44 @@ func (p *Parser) parsePrefixExpression() ast.Expression {
 	return expression
 }
 
+func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
+	token := p.peekN(0)
+
+	expression := &ast.InfixExpression{
+		Token:    token,
+		Operator: token.Literal,
+		Left:     left,
+	}
+
+	precedence := p.peekPrecedence(1)
+	p.advance()
+	expression.Right = p.parseExpression(precedence)
+
+	return expression
+}
+
 func (p *Parser) error(s string) {
 	fmt.Printf("Error at line %d: %s\n", p.peekN(0).Line, s)
 }
 
 func (p *Parser) peekN(n int) token.Token {
-	return p.tokens[p.current+n]
+	index := p.current + n
+	if index >= len(p.tokens) {
+		return token.Token{Type: token.EOF, Literal: "EOF", Line: 0}
+	}
+	return p.tokens[index]
 }
 
 func (p *Parser) peekNtokenIs(n int, t token.TokenType) bool {
 	return p.peekN(n).Type == t
+}
+
+func (p *Parser) peekPrecedence(n int) int {
+	if p, ok := precedences[p.peekN(n).Type]; ok {
+		return p
+	}
+
+	return LOWEST
 }
 
 func (p *Parser) isAtEnd() bool {

@@ -34,7 +34,7 @@ func TokenizeLine(line string, lineNum int) ([]Token, error) {
 			i++
 
 		case ch == ';':
-			tokens = append(tokens, Token{Type: SEMICOLON, Literal: string(ch)})
+			tokens = append(tokens, Token{Type: SEMICOLON, Literal: string(ch), Line: lineNum})
 			i++
 
 		case isLetter(ch):
@@ -48,24 +48,57 @@ func TokenizeLine(line string, lineNum int) ([]Token, error) {
 			i += length
 
 		case ch == '=':
-			tokens = append(tokens, Token{Type: EQUALS, Literal: string(ch)})
+			if i+1 < len(line) && rune(line[i+1]) == '=' {
+				tokens = append(tokens, Token{Type: EQUALS, Literal: "==", Line: lineNum})
+				i += 2
+			} else {
+				tokens = append(tokens, Token{Type: ASSIGN, Literal: "=", Line: lineNum})
+				i++
+			}
 
 		case ch == '!':
-			next := rune(line[i+1])
-			if next == '=' {
-				tokens = append(tokens, Token{Type: NOT_EQUALS, Literal: string(ch)})
+			if i+1 < len(line) && rune(line[i+1]) == '=' {
+				tokens = append(tokens, Token{Type: NOT_EQUALS, Literal: "!=", Line: lineNum})
+				i += 2
+			} else {
+				tokens = append(tokens, Token{Type: NOT, Literal: "!", Line: lineNum})
+				i++
 			}
-			tokens = append(tokens, Token{Type: NOT, Literal: string(ch)})
+
+		case ch == '+':
+			tokens = append(tokens, Token{Type: PLUS, Literal: "+", Line: lineNum})
 			i++
+
+		case ch == '-':
+			tokens = append(tokens, Token{Type: MINUS, Literal: "-", Line: lineNum})
+			i++
+
+		case ch == '*':
+			tokens = append(tokens, Token{Type: MULTIPLY, Literal: "*", Line: lineNum})
+			i++
+
+		case ch == '/':
+			tokens = append(tokens, Token{Type: DIVIDE, Literal: "/", Line: lineNum})
+			i++
+
+		case ch == '>':
+			tokens = append(tokens, Token{Type: GREATER, Literal: ">", Line: lineNum})
+			i++
+
+		case ch == '<':
+			tokens = append(tokens, Token{Type: LESS_GREATER, Literal: "<", Line: lineNum})
+			i++
+
 		case isDigit(ch):
 			start := i
 			for i < len(line) && isDigit(rune(line[i])) {
 				i++
 			}
-			tokens = append(tokens, Token{Type: NUMBER, Literal: line[start:i]})
+			tokens = append(tokens, Token{Type: NUMBER, Literal: line[start:i], Line: lineNum})
+
 		default:
 			i++
-			tokens = append(tokens, Token{Type: STRING, Literal: string(ch)})
+			tokens = append(tokens, Token{Type: STRING, Literal: string(ch), Line: lineNum})
 		}
 
 	}

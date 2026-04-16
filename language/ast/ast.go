@@ -3,7 +3,16 @@ package ast
 import (
 	"bytes"
 	"deadlock/language/token"
+	"strings"
 )
+
+// safeExprString safely converts an Expression to string, returning "" if nil
+func safeExprString(expr Expression) string {
+	if expr == nil {
+		return ""
+	}
+	return expr.String()
+}
 
 type Node interface {
 	TokenLiteral() string
@@ -33,13 +42,13 @@ func (p *Program) TokenLiteral() string {
 }
 
 func (p *Program) String() string {
-	var out bytes.Buffer
+	var s strings.Builder
 
-	for _, s := range p.Statements {
-		out.WriteString(s.String())
+	for _, stmt := range p.Statements {
+		s.WriteString(stmt.String())
 	}
 
-	return out.String()
+	return s.String()
 }
 
 type Identifier struct {
@@ -84,9 +93,11 @@ func (vd *VariableDeclaration) String() string {
 		out.WriteString("shared ")
 	}
 	out.WriteString(vd.Type)
-	out.WriteString(vd.Name.String())
+	if vd.Name != nil {
+		out.WriteString(vd.Name.String())
+	}
 	out.WriteString(" = ")
-	out.WriteString(vd.Value.String())
+	out.WriteString(safeExprString(vd.Value))
 
 	return out.String()
 }
@@ -106,7 +117,7 @@ func (pe *PrefixExpression) String() string {
 	var out bytes.Buffer
 	out.WriteString("(")
 	out.WriteString(pe.Operator)
-	out.WriteString(pe.Right.String())
+	out.WriteString(safeExprString(pe.Right))
 	out.WriteString(")")
 
 	return out.String()
@@ -125,9 +136,9 @@ func (oe *InfixExpression) String() string {
 	var out bytes.Buffer
 
 	out.WriteString("(")
-	out.WriteString(oe.Left.String())
+	out.WriteString(safeExprString(oe.Left))
 	out.WriteString(" " + oe.Operator + " ")
-	out.WriteString(oe.Right.String())
+	out.WriteString(safeExprString(oe.Right))
 	out.WriteString(")")
 
 	return out.String()

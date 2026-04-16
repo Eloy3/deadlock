@@ -1,6 +1,7 @@
 package token
 
 const (
+	ILLEGAGL   = "ILLEGAL"
 	EOF        = "EOF"
 	IDENTIFIER = "IDENTIFIER"
 	NUMBER     = "NUMBER"

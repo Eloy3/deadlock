@@ -80,6 +80,7 @@ func NewParser(tokens []token.Token) *Parser {
 	parser.registerPrefix(token.NUMBER, parser.parseIntegerLiteral)
 	parser.registerPrefix(token.NOT, parser.parsePrefixExpression)
 	parser.registerPrefix(token.MINUS, parser.parsePrefixExpression)
+	parser.registerPrefix(token.LPAREN, parser.parseGroupedExpression)
 
 	parser.infixParseFns = make(map[token.TokenType]infixParseFn)
 	parser.registerInfix(token.PLUS, parser.parseInfixExpression)
@@ -94,17 +95,16 @@ func NewParser(tokens []token.Token) *Parser {
 	return parser
 }
 
-func (p *Parser) ParseProgram() []ast.Statement {
+func (p *Parser) ParseProgram() ast.Program {
 	var statements []ast.Statement
 	for !p.isAtEnd() {
 		stmt := p.parseStatement()
-		if stmt == nil {
-			return nil
+		if stmt != nil {
+			statements = append(statements, stmt)
 		}
-		statements = append(statements, stmt)
 		p.advance()
 	}
-	return statements
+	return ast.Program{Statements: statements}
 }
 
 func (p *Parser) parseStatement() ast.Statement {
@@ -125,6 +125,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 
 	if p.peekNtokenIs(1, token.SEMICOLON) {
 		p.advance()
+		p.advance()
 	}
 
 	return stmt
@@ -139,7 +140,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	}
 	leftExp := prefix()
 
-	for !p.peekNtokenIs(0, token.SEMICOLON) && precedence < p.peekPrecedence(1) {
+	for !p.peekNtokenIs(1, token.SEMICOLON) && precedence < p.peekPrecedence(1) {
 		infix := p.infixParseFns[p.peekN(1).Type]
 		if infix == nil {
 			return leftExp
@@ -150,6 +151,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 		leftExp = infix(leftExp)
 	}
 
+	p.advance()
 	return leftExp
 }
 
@@ -239,6 +241,19 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	return expression
 }
 
+func (p *Parser) parseGroupedExpression() ast.Expression {
+	p.advance()
+
+	exp := p.parseExpression(LOWEST)
+
+	if !p.peekNtokenIs(1, token.RPAREN) {
+		return nil
+	}
+
+	p.advance()
+	return exp
+}
+
 func (p *Parser) error(s string) {
 	fmt.Printf("Error at line %d: %s\n", p.peekN(0).Line, s)
 }
@@ -252,7 +267,7 @@ func (p *Parser) peekN(n int) token.Token {
 }
 
 func (p *Parser) peekNtokenIs(n int, t token.TokenType) bool {
-	return p.peekN(n).Type == t
+	return p.peekN(p.current+n).Type == t
 }
 
 func (p *Parser) peekPrecedence(n int) int {

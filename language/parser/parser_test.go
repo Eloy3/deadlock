@@ -36,10 +36,10 @@ func TestIdentifierExpression(t *testing.T) {
 	}
 
 	parser := NewParser(tokens)
-	statements := parser.ParseProgram()
+	program := parser.ParseProgram()
 	checkParserErrors(t, parser)
-	if len(statements) != 1 {
-		t.Fatalf("program has not enough statements. got=%d", len(statements))
+	if len(program.Statements) != 1 {
+		t.Fatalf("program has not enough statements. got=%d", len(program.Statements))
 	}
 }
 
@@ -54,20 +54,24 @@ func TestParsingPrefixExpressions(t *testing.T) {
 	}
 
 	for _, tt := range prefixTests {
-		tokens, _ := token.TokenizeProgram(tt.input)
+		tokens, err := token.TokenizeProgram(tt.input)
+		if err != nil {
+			t.Errorf("%s", err.Error())
+			return
+		}
 		parser := NewParser(tokens)
 		program := parser.ParseProgram()
 		checkParserErrors(t, parser)
 
-		if len(program) != 1 {
+		if len(program.Statements) != 1 {
 			t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
-				1, len(program))
+				1, len(program.Statements))
 		}
 
-		stmt, ok := program[0].(*ast.ExpressionStatement)
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 		if !ok {
 			t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T",
-				program[0])
+				program.Statements[0])
 		}
 
 		exp, ok := stmt.Expression.(*ast.PrefixExpression)
@@ -124,20 +128,24 @@ func TestParsingInfixExpressions(t *testing.T) {
 	}
 
 	for _, tt := range infixTests {
-		tokens, _ := token.TokenizeProgram(tt.input)
+		tokens, err := token.TokenizeProgram(tt.input)
+		if err != nil {
+			t.Errorf("%s", err.Error())
+			return
+		}
 		parser := NewParser(tokens)
 		program := parser.ParseProgram()
 		checkParserErrors(t, parser)
 
-		if len(program) != 1 {
+		if len(program.Statements) != 1 {
 			t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
-				1, len(program))
+				1, len(program.Statements))
 		}
 
-		stmt, ok := program[0].(*ast.ExpressionStatement)
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 		if !ok {
 			t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T",
-				program[0])
+				program.Statements[0])
 		}
 
 		exp, ok := stmt.Expression.(*ast.InfixExpression)
@@ -189,12 +197,16 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tokens, _ := token.TokenizeProgram(tt.input)
+		tokens, err := token.TokenizeProgram(tt.input)
+		if err != nil {
+			t.Errorf("%s", err.Error())
+			return
+		}
 		parser := NewParser(tokens)
 		program := parser.ParseProgram()
 		checkParserErrors(t, parser)
 
-		actual := program[0].String()
+		actual := program.String()
 		if actual != tt.expected {
 			t.Errorf("expected=%q, got=%q", tt.expected, actual)
 		}

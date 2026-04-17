@@ -91,6 +91,8 @@ func NewParser(tokens []token.Token) *Parser {
 	parser.registerInfix(token.NOT_EQUALS, parser.parseInfixExpression)
 	parser.registerInfix(token.LESS_GREATER, parser.parseInfixExpression)
 	parser.registerInfix(token.GREATER, parser.parseInfixExpression)
+	parser.registerInfix(token.GREATER_EQ, parser.parseInfixExpression)
+	parser.registerInfix(token.LESS_GREATER_EQ, parser.parseInfixExpression)
 
 	return parser
 }
@@ -125,7 +127,6 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 
 	if p.peekNtokenIs(1, token.SEMICOLON) {
 		p.advance()
-		p.advance()
 	}
 
 	return stmt
@@ -151,7 +152,6 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 		leftExp = infix(leftExp)
 	}
 
-	p.advance()
 	return leftExp
 }
 
@@ -234,7 +234,7 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 		Left:     left,
 	}
 
-	precedence := p.peekPrecedence(1)
+	precedence := p.peekPrecedence(0)
 	p.advance()
 	expression.Right = p.parseExpression(precedence)
 
@@ -267,7 +267,7 @@ func (p *Parser) peekN(n int) token.Token {
 }
 
 func (p *Parser) peekNtokenIs(n int, t token.TokenType) bool {
-	return p.peekN(p.current+n).Type == t
+	return p.peekN(n).Type == t
 }
 
 func (p *Parser) peekPrecedence(n int) int {

@@ -73,12 +73,22 @@ func TokenizeLine(line string, lineNum int) ([]Token, error) {
 			i++
 
 		case ch == '>':
-			tokens = append(tokens, Token{Type: GREATER, Literal: ">", Line: lineNum})
-			i++
+			if i+1 < len(line) && rune(line[i+1]) == '=' {
+				tokens = append(tokens, Token{Type: GREATER_EQ, Literal: ">=", Line: lineNum})
+				i += 2
+			} else {
+				tokens = append(tokens, Token{Type: GREATER, Literal: ">", Line: lineNum})
+				i++
+			}
 
 		case ch == '<':
-			tokens = append(tokens, Token{Type: LESS_GREATER, Literal: "<", Line: lineNum})
-			i++
+			if i+1 < len(line) && rune(line[i+1]) == '=' {
+				tokens = append(tokens, Token{Type: LESS_GREATER_EQ, Literal: "<=", Line: lineNum})
+				i += 2
+			} else {
+				tokens = append(tokens, Token{Type: LESS_GREATER, Literal: "<", Line: lineNum})
+				i++
+			}
 
 		case ch == '(':
 			tokens = append(tokens, Token{Type: LPAREN, Literal: "(", Line: lineNum})

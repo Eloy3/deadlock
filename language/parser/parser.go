@@ -112,9 +112,9 @@ func (p *Parser) ParseProgram() ast.Program {
 func (p *Parser) parseStatement() ast.Statement {
 	tok := p.peekN(0)
 	switch tok.Type {
-	case token.SHARED:
+	case token.LET:
 		tok = p.advance()
-		return p.parseVarDecl(true)
+		return p.parseVarDecl()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -160,19 +160,29 @@ func (p *Parser) noPrefixParseFnError(t token.TokenType) {
 	p.errors = append(p.errors, msg)
 }
 
-func (p *Parser) parseVarDecl(shared bool) *ast.VariableDeclaration {
+func (p *Parser) parseVarDecl() *ast.VariableDeclaration {
+	shared := false
+	if p.peekNtokenIs(0, token.SHARED) {
+		shared = true
+		p.advance()
+	}
 	stmt := &ast.VariableDeclaration{Shared: shared}
 
-	if !p.peekNtokenIs(1, token.IDENTIFIER) {
-		return nil
-	}
-
 	tok := p.peekN(0)
-	stmt.Name = &ast.Identifier{Token: tok, Value: tok.Literal}
 
-	if !p.peekNtokenIs(1, token.EQUALS) {
+	if tok.Type != token.IDENTIFIER {
 		return nil
 	}
+
+	stmt.Name = &ast.Identifier{Token: tok, Value: tok.Literal}
+	p.advance()
+
+	if !p.peekNtokenIs(0, token.ASSIGN) {
+		return nil
+	}
+	p.advance()
+
+	stmt.Value = p.parseExpression(LOWEST)
 
 	for !p.peekNtokenIs(0, token.SEMICOLON) {
 		p.advance()

@@ -7,6 +7,7 @@ const (
 	NUMBER     = "NUMBER"
 	STRING     = "STRING"
 
+	LET    = "LET"
 	SHARED = "SHARED"
 	INT    = "INT"
 	THREAD = "THREAD"
@@ -60,6 +61,7 @@ type Token struct {
 var keywords = map[string]TokenType{
 	"shared": SHARED, "int": INT, "thread": THREAD,
 	"lock": LOCK, "unlock": UNLOCK, "print": PRINT,
+	"let": LET,
 }
 
 func isWhitespace(ch rune) bool {

@@ -85,10 +85,10 @@ type VariableDeclaration struct {
 }
 
 // String implements Statement.
-// shared int x = 1
+// let shared int x = 1
 func (vd *VariableDeclaration) String() string {
 	var out bytes.Buffer
-
+	out.WriteString("let ")
 	if vd.Shared {
 		out.WriteString("shared ")
 	}

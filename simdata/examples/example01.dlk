@@ -1,4 +1,4 @@
-shared int x = 0;
+let shared int x = 0;
 
 thread t1 {
     lock(m);

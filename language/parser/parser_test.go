@@ -248,3 +248,40 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		}
 	}
 }
+
+func TestLetStatement(t *testing.T) {
+	letTests := []struct {
+		input  string
+		Shared bool
+		Name   string
+		Value  string
+	}{
+		{"let shared x = 0;", true, "x", "0"},
+		{"let y = true;", false, "y", "true"},
+	}
+
+	for _, tt := range letTests {
+		tokens, err := token.TokenizeProgram(tt.input)
+		if err != nil {
+			t.Errorf("%s", err.Error())
+			return
+		}
+		parser := NewParser(tokens)
+		program := parser.ParseProgram()
+		checkParserErrors(t, parser)
+
+		if len(program.Statements) != 1 {
+			t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
+				1, len(program.Statements))
+		}
+
+		stmt, ok := program.Statements[0].(*ast.VariableDeclaration)
+		if !ok {
+			t.Fatalf("stmt is not ast.VariableDeclaration. got=%T", program.Statements[0])
+		}
+
+		if stmt.Name.String() != tt.Name {
+			t.Fatalf("stmt name is not '%s'. got=%s", tt.Name, stmt.Name.String())
+		}
+	}
+}

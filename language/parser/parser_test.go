@@ -285,3 +285,45 @@ func TestLetStatement(t *testing.T) {
 		}
 	}
 }
+
+func TestBooleanExpression(t *testing.T) {
+	booleanTests := []struct {
+		input string
+		id    string
+		value bool
+	}{
+		{"true;", "", true},
+		{"false;", "", false},
+	}
+
+	for _, tt := range booleanTests {
+		tokens, err := token.TokenizeProgram(tt.input)
+		if err != nil {
+			t.Errorf("%s", err.Error())
+			return
+		}
+		parser := NewParser(tokens)
+		program := parser.ParseProgram()
+		checkParserErrors(t, parser)
+
+		if len(program.Statements) != 1 {
+			t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
+				1, len(program.Statements))
+		}
+
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T",
+				program.Statements[0])
+		}
+
+		exp, ok := stmt.Expression.(*ast.Boolean)
+		if !ok {
+			t.Fatalf("stmt is not ast.PrefixExpression. got=%T", stmt.Expression)
+		}
+
+		if exp.Value != tt.value {
+			t.Fatalf("expression is not %t. got=%t", exp.Value, tt.value)
+		}
+	}
+}

@@ -158,6 +158,15 @@ func (es *ExpressionStatement) String() string {
 	return ""
 }
 
+type Boolean struct {
+	Token token.Token
+	Value bool
+}
+
+func (b *Boolean) expr()                {}
+func (b *Boolean) TokenLiteral() string { return b.Token.Literal }
+func (b *Boolean) String() string       { return b.Token.Literal }
+
 type Assignment struct {
 	Name   string
 	Value  Expression

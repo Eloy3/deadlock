@@ -14,6 +14,8 @@ const (
 	LOCK   = "LOCK"
 	UNLOCK = "UNLOCK"
 	PRINT  = "PRINT"
+	TRUE   = "true"
+	FALSE  = "false"
 
 	ASSIGN = "="
 
@@ -61,7 +63,7 @@ type Token struct {
 var keywords = map[string]TokenType{
 	"shared": SHARED, "int": INT, "thread": THREAD,
 	"lock": LOCK, "unlock": UNLOCK, "print": PRINT,
-	"let": LET,
+	"let": LET, "true": TRUE, "false": FALSE,
 }
 
 func isWhitespace(ch rune) bool {

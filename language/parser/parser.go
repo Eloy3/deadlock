@@ -81,6 +81,8 @@ func NewParser(tokens []token.Token) *Parser {
 	parser.registerPrefix(token.NOT, parser.parsePrefixExpression)
 	parser.registerPrefix(token.MINUS, parser.parsePrefixExpression)
 	parser.registerPrefix(token.LPAREN, parser.parseGroupedExpression)
+	parser.registerPrefix(token.TRUE, parser.parseBoolean)
+	parser.registerPrefix(token.FALSE, parser.parseBoolean)
 
 	parser.infixParseFns = make(map[token.TokenType]infixParseFn)
 	parser.registerInfix(token.PLUS, parser.parseInfixExpression)
@@ -262,6 +264,10 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 
 	p.advance()
 	return exp
+}
+
+func (p *Parser) parseBoolean() ast.Expression {
+	return &ast.Boolean{Token: p.peekN(0), Value: p.peekNtokenIs(0, token.TRUE)}
 }
 
 func (p *Parser) error(s string) {

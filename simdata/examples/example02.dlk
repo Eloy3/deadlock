@@ -1,0 +1,26 @@
+shared {
+    counter = 0;
+    ready = false;
+}
+
+mutex m;
+
+thread incrementer {
+
+    local temp = 0;
+
+    lock(m);
+
+    temp = counter;
+    temp = temp + 1;
+    counter = temp;
+
+    unlock(m);
+}
+
+thread observer {
+
+    if counter > 0 {
+        print("counter changed");
+    }
+}

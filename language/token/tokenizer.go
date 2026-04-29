@@ -98,6 +98,27 @@ func TokenizeLine(line string, lineNum int) ([]Token, error) {
 			tokens = append(tokens, Token{Type: RPAREN, Literal: ")", Line: lineNum})
 			i++
 
+		case ch == '{':
+			tokens = append(tokens, Token{Type: LBRACE, Literal: "{", Line: lineNum})
+			i++
+
+		case ch == '}':
+			tokens = append(tokens, Token{Type: RBRACE, Literal: "}", Line: lineNum})
+			i++
+
+		case ch == '"':
+			start := i
+			i++
+			for i < len(line) && rune(line[i]) != '"' {
+				i++
+			}
+			if i >= len(line) {
+				err := fmt.Errorf("unclosed string on line %d", lineNum)
+				return nil, err
+			}
+			i++ // skip closing quote
+			tokens = append(tokens, Token{Type: STRING, Literal: line[start:i], Line: lineNum})
+
 		case isDigit(ch):
 			start := i
 			for i < len(line) && isDigit(rune(line[i])) {

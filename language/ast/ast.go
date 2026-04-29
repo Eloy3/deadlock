@@ -77,22 +77,17 @@ type FunctionCall struct {
 func (fc FunctionCall) expr() {}
 
 type VariableDeclaration struct {
-	Token  token.Token
-	Type   string
-	Shared bool
-	Name   *Identifier
-	Value  Expression
+	Token token.Token
+	Local bool
+	Name  *Identifier
+	Value Expression
 }
 
-// String implements Statement.
-// let shared int x = 1
 func (vd *VariableDeclaration) String() string {
 	var out bytes.Buffer
-	out.WriteString("let ")
-	if vd.Shared {
-		out.WriteString("shared ")
+	if vd.Local {
+		out.WriteString("local ")
 	}
-	out.WriteString(vd.Type)
 	if vd.Name != nil {
 		out.WriteString(vd.Name.String())
 	}
@@ -167,6 +162,91 @@ func (b *Boolean) expr()                {}
 func (b *Boolean) TokenLiteral() string { return b.Token.Literal }
 func (b *Boolean) String() string       { return b.Token.Literal }
 
+type StringLiteral struct {
+	Token token.Token
+	Value string
+}
+
+func (sl *StringLiteral) expr()                {}
+func (sl *StringLiteral) TokenLiteral() string { return sl.Token.Literal }
+func (sl *StringLiteral) String() string       { return sl.Token.Literal }
+
+type BlockStatement struct {
+	Token      token.Token
+	Statements []Statement
+}
+
+func (bs *BlockStatement) stmt()                {}
+func (bs *BlockStatement) TokenLiteral() string { return bs.Token.Literal }
+func (bs *BlockStatement) String() string {
+	var s strings.Builder
+	s.WriteString("{\n")
+	for _, stmt := range bs.Statements {
+		s.WriteString("\t")
+		s.WriteString(stmt.String())
+		s.WriteString("\n")
+	}
+	s.WriteString("}")
+	return s.String()
+}
+
+type SharedBlock struct {
+	Token        token.Token
+	Declarations []*VariableDeclaration
+}
+
+func (sb *SharedBlock) stmt()                {}
+func (sb *SharedBlock) TokenLiteral() string { return sb.Token.Literal }
+func (sb *SharedBlock) String() string {
+	var s strings.Builder
+	s.WriteString("shared {\n")
+	for _, decl := range sb.Declarations {
+		s.WriteString("\t")
+		s.WriteString(decl.String())
+		s.WriteString("\n")
+	}
+	s.WriteString("}")
+	return s.String()
+}
+
+type MutexDecl struct {
+	Token token.Token
+	Name  *Identifier
+}
+
+func (md *MutexDecl) stmt()                {}
+func (md *MutexDecl) TokenLiteral() string { return md.Token.Literal }
+func (md *MutexDecl) String() string {
+	var out bytes.Buffer
+	out.WriteString("mutex ")
+	if md.Name != nil {
+		out.WriteString(md.Name.String())
+	}
+	return out.String()
+}
+
+type IfStatement struct {
+	Token       token.Token
+	Condition   Expression
+	Consequence *BlockStatement
+	Alternative *BlockStatement // for else
+}
+
+func (is *IfStatement) stmt()                {}
+func (is *IfStatement) TokenLiteral() string { return is.Token.Literal }
+func (is *IfStatement) String() string {
+	var out bytes.Buffer
+	out.WriteString("if ")
+	out.WriteString(safeExprString(is.Condition))
+	out.WriteString(" ")
+	out.WriteString(is.Consequence.String())
+	if is.Alternative != nil {
+		out.WriteString(" else ")
+		out.WriteString(is.Alternative.String())
+	}
+	return out.String()
+}
+
 type Assignment struct {
 	Name   string
 	Value  Expression
@@ -174,14 +254,50 @@ type Assignment struct {
 }
 
 type LockStmt struct {
-	LockName string
+	Token token.Token
+	Name  string
 }
 
+func (ls *LockStmt) stmt()                {}
+func (ls *LockStmt) TokenLiteral() string { return ls.Token.Literal }
+func (ls *LockStmt) String() string       { return "lock(" + ls.Name + ")" }
+
+type UnlockStmt struct {
+	Token token.Token
+	Name  string
+}
+
+func (us *UnlockStmt) stmt()                {}
+func (us *UnlockStmt) TokenLiteral() string { return us.Token.Literal }
+func (us *UnlockStmt) String() string       { return "unlock(" + us.Name + ")" }
+
 type PrintStmt struct {
+	Token token.Token
 	Value Expression
 }
 
+func (ps *PrintStmt) stmt()                {}
+func (ps *PrintStmt) TokenLiteral() string { return ps.Token.Literal }
+func (ps *PrintStmt) String() string       { return "print(" + safeExprString(ps.Value) + ")" }
+
 type ThreadDecl struct {
-	Name string
-	Body []Statement
+	Token token.Token
+	Name  string
+	Body  []Statement
+}
+
+func (td *ThreadDecl) stmt()                {}
+func (td *ThreadDecl) TokenLiteral() string { return td.Token.Literal }
+func (td *ThreadDecl) String() string {
+	var s strings.Builder
+	s.WriteString("thread ")
+	s.WriteString(td.Name)
+	s.WriteString(" {\n")
+	for _, stmt := range td.Body {
+		s.WriteString("\t")
+		s.WriteString(stmt.String())
+		s.WriteString("\n")
+	}
+	s.WriteString("}")
+	return s.String()
 }

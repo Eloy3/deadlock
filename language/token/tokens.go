@@ -16,6 +16,10 @@ const (
 	PRINT  = "PRINT"
 	TRUE   = "true"
 	FALSE  = "false"
+	IF     = "IF"
+	ELSE   = "ELSE"
+	LOCAL  = "LOCAL"
+	MUTEX  = "MUTEX"
 
 	ASSIGN = "="
 
@@ -64,6 +68,7 @@ var keywords = map[string]TokenType{
 	"shared": SHARED, "int": INT, "thread": THREAD,
 	"lock": LOCK, "unlock": UNLOCK, "print": PRINT,
 	"let": LET, "true": TRUE, "false": FALSE,
+	"if": IF, "else": ELSE, "local": LOCAL, "mutex": MUTEX,
 }
 
 func isWhitespace(ch rune) bool {

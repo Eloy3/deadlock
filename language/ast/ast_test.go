@@ -14,8 +14,7 @@ func TestString(t *testing.T) {
 	program := &Program{
 		Statements: []Statement{
 			&VariableDeclaration{
-				Shared: true,
-				Token:  token.Token{Type: token.ASSIGN, Literal: "="},
+				Token: token.Token{Type: token.ASSIGN, Literal: "="},
 				Name: &Identifier{
 					Token: token.Token{Type: token.IDENTIFIER, Literal: "foo"},
 					Value: "foo",
@@ -28,5 +27,5 @@ func TestString(t *testing.T) {
 		},
 	}
 
-	assert.Equal("shared foo = bar", program.String())
+	assert.Equal("foo = bar", program.String())
 }

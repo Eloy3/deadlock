@@ -249,18 +249,18 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 	}
 }
 
-func TestLetStatement(t *testing.T) {
-	letTests := []struct {
-		input  string
-		Shared bool
-		Name   string
-		Value  string
+func TestLocalDeclarationStatement(t *testing.T) {
+	localTests := []struct {
+		input string
+		Name  string
+		Value string
+		local bool
 	}{
-		{"let shared x = 0;", true, "x", "0"},
-		{"let y = true;", false, "y", "true"},
+		{"local temp = 0;", "temp", "0", true},
+		{"local y = true;", "y", "true", true},
 	}
 
-	for _, tt := range letTests {
+	for _, tt := range localTests {
 		tokens, err := token.TokenizeProgram(tt.input)
 		if err != nil {
 			t.Errorf("%s", err.Error())
@@ -282,6 +282,10 @@ func TestLetStatement(t *testing.T) {
 
 		if stmt.Name.String() != tt.Name {
 			t.Fatalf("stmt name is not '%s'. got=%s", tt.Name, stmt.Name.String())
+		}
+
+		if stmt.Local != tt.local {
+			t.Fatalf("stmt scope is unexpected")
 		}
 	}
 }

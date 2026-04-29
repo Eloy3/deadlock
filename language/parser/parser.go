@@ -114,9 +114,9 @@ func (p *Parser) ParseProgram() ast.Program {
 func (p *Parser) parseStatement() ast.Statement {
 	tok := p.peekN(0)
 	switch tok.Type {
-	case token.LET:
+	case token.LOCAL:
 		tok = p.advance()
-		return p.parseVarDecl()
+		return p.parseLocalVarDecl()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -162,13 +162,8 @@ func (p *Parser) noPrefixParseFnError(t token.TokenType) {
 	p.errors = append(p.errors, msg)
 }
 
-func (p *Parser) parseVarDecl() *ast.VariableDeclaration {
-	shared := false
-	if p.peekNtokenIs(0, token.SHARED) {
-		shared = true
-		p.advance()
-	}
-	stmt := &ast.VariableDeclaration{Shared: shared}
+func (p *Parser) parseLocalVarDecl() *ast.VariableDeclaration {
+	stmt := &ast.VariableDeclaration{Local: true}
 
 	tok := p.peekN(0)
 

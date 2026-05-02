@@ -83,6 +83,7 @@ func NewParser(tokens []token.Token) *Parser {
 	parser.registerPrefix(token.LPAREN, parser.parseGroupedExpression)
 	parser.registerPrefix(token.TRUE, parser.parseBoolean)
 	parser.registerPrefix(token.FALSE, parser.parseBoolean)
+	parser.registerPrefix(token.IF, parser.parseIfExpression)
 
 	parser.infixParseFns = make(map[token.TokenType]infixParseFn)
 	parser.registerInfix(token.PLUS, parser.parseInfixExpression)
@@ -114,8 +115,10 @@ func (p *Parser) ParseProgram() ast.Program {
 func (p *Parser) parseStatement() ast.Statement {
 	tok := p.peekN(0)
 	switch tok.Type {
+	case token.SHARED:
+		return nil
 	case token.LOCAL:
-		tok = p.advance()
+		p.advance()
 		return p.parseLocalVarDecl()
 	default:
 		return p.parseExpressionStatement()
@@ -160,6 +163,84 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 func (p *Parser) noPrefixParseFnError(t token.TokenType) {
 	msg := fmt.Sprintf("no prefix parse function for %s found", t)
 	p.errors = append(p.errors, msg)
+}
+
+func (p *Parser) parseSharedBlock() *ast.SharedBlock {
+	//stmt := &ast.SharedBlock{Token: p.peekN(0)}
+	p.advance()
+	tok := p.peekN(0)
+
+	if tok.Type != token.LBRACKET {
+		return nil
+	}
+	return nil
+}
+
+func (p *Parser) parseIfExpression() ast.Expression {
+	expression := &ast.IfExpression{Token: p.peekN(0)}
+
+	if !p.peekNtokenIs(1, token.LPAREN) {
+		return nil
+	}
+	p.advance() // move to token '('
+
+	p.advance()
+	expression.Condition = p.parseExpression(LOWEST)
+
+	if !p.peekNtokenIs(1, token.RPAREN) {
+		return nil
+	}
+	p.advance() // move to token ')'
+
+	if !p.peekNtokenIs(1, token.LBRACE) {
+		return nil
+	}
+	p.advance() // move to token '{'
+
+	expression.Consequence = p.parseBlockStatement()
+
+	if p.peekNtokenIs(1, token.ELSE) {
+		p.advance()
+		p.advance() // skip token 'else'
+
+		if p.peekNtokenIs(1, token.IF) {
+			p.advance()
+			p.advance() // skip token 'if'
+			expression.Alternative = &ast.BlockStatement{
+				Statements: []ast.Statement{
+					&ast.ExpressionStatement{
+						Expression: p.parseIfExpression(),
+					},
+				},
+			}
+			return expression
+		}
+
+		if !p.peekNtokenIs(1, token.LBRACE) {
+			return nil
+		}
+
+		expression.Alternative = p.parseBlockStatement()
+	}
+
+	return expression
+}
+
+func (p *Parser) parseBlockStatement() *ast.BlockStatement {
+	block := &ast.BlockStatement{Token: p.peekN(0)}
+	block.Statements = []ast.Statement{}
+
+	p.advance()
+
+	for !p.peekNtokenIs(0, token.RBRACE) && !p.peekNtokenIs(0, token.EOF) {
+		stmt := p.parseStatement()
+		if stmt != nil {
+			block.Statements = append(block.Statements, stmt)
+		}
+		p.advance()
+	}
+
+	return block
 }
 
 func (p *Parser) parseLocalVarDecl() *ast.VariableDeclaration {

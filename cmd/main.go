@@ -14,7 +14,7 @@ func main() {
 	dir, _ := os.Getwd()
 	fmt.Println("Working directory:", dir)
 
-	f, err := os.Open("../simdata/examples/example01.dlk")
+	f, err := os.Open("../simdata/examples/example02.dlk")
 	if err != nil {
 		fmt.Println("Error opening file:", err)
 		return

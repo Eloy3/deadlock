@@ -179,15 +179,13 @@ type BlockStatement struct {
 func (bs *BlockStatement) stmt()                {}
 func (bs *BlockStatement) TokenLiteral() string { return bs.Token.Literal }
 func (bs *BlockStatement) String() string {
-	var s strings.Builder
-	s.WriteString("{\n")
-	for _, stmt := range bs.Statements {
-		s.WriteString("\t")
-		s.WriteString(stmt.String())
-		s.WriteString("\n")
+	var out bytes.Buffer
+
+	for _, s := range bs.Statements {
+		out.WriteString(s.String())
 	}
-	s.WriteString("}")
-	return s.String()
+
+	return out.String()
 }
 
 type SharedBlock struct {
@@ -300,4 +298,31 @@ func (td *ThreadDecl) String() string {
 	}
 	s.WriteString("}")
 	return s.String()
+}
+
+type IfExpression struct {
+	Token       token.Token // The 'if' token
+	Condition   Expression
+	Consequence *BlockStatement
+	Alternative *BlockStatement
+}
+
+func (ie *IfExpression) expr() {}
+
+func (ie *IfExpression) TokenLiteral() string { return ie.Token.Literal }
+
+func (ie *IfExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("if")
+	out.WriteString(ie.Condition.String())
+	out.WriteString(" ")
+	out.WriteString(ie.Consequence.String())
+
+	if ie.Alternative != nil {
+		out.WriteString("else ")
+		out.WriteString(ie.Alternative.String())
+	}
+
+	return out.String()
 }

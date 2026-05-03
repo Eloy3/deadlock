@@ -2,7 +2,6 @@ package parser
 
 import (
 	"deadlock/language/ast"
-	"deadlock/language/token"
 	"fmt"
 
 	"testing"
@@ -25,22 +24,8 @@ func checkParserErrors(t *testing.T, p *Parser) {
 func TestIdentifierExpression(t *testing.T) {
 	input := "foobar;"
 
-	tokens, errors := token.TokenizeProgram(input)
-
-	if errors != nil {
-		t.Fatalf("Error tokenizing program")
-	}
-
-	if len(tokens) < 1 {
-		t.Fatalf("No tokens detected")
-	}
-
-	parser := NewParser(tokens)
-	program := parser.ParseProgram()
-	checkParserErrors(t, parser)
-	if len(program.Statements) != 1 {
-		t.Fatalf("program has not enough statements. got=%d", len(program.Statements))
-	}
+	program := parseInput(t, input)
+	requireExactlyOneStatement(t, program)
 }
 
 func TestParsingPrefixExpressions(t *testing.T) {
@@ -54,19 +39,8 @@ func TestParsingPrefixExpressions(t *testing.T) {
 	}
 
 	for _, tt := range prefixTests {
-		tokens, err := token.TokenizeProgram(tt.input)
-		if err != nil {
-			t.Errorf("%s", err.Error())
-			return
-		}
-		parser := NewParser(tokens)
-		program := parser.ParseProgram()
-		checkParserErrors(t, parser)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
-				1, len(program.Statements))
-		}
+		program := parseInput(t, tt.input)
+		requireExactlyOneStatement(t, program)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 		if !ok {
@@ -128,19 +102,8 @@ func TestParsingInfixExpressions(t *testing.T) {
 	}
 
 	for _, tt := range infixTests {
-		tokens, err := token.TokenizeProgram(tt.input)
-		if err != nil {
-			t.Errorf("%s", err.Error())
-			return
-		}
-		parser := NewParser(tokens)
-		program := parser.ParseProgram()
-		checkParserErrors(t, parser)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
-				1, len(program.Statements))
-		}
+		program := parseInput(t, tt.input)
+		requireExactlyOneStatement(t, program)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 		if !ok {
@@ -233,15 +196,7 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tokens, err := token.TokenizeProgram(tt.input)
-		if err != nil {
-			t.Errorf("%s", err.Error())
-			return
-		}
-		parser := NewParser(tokens)
-		program := parser.ParseProgram()
-		checkParserErrors(t, parser)
-
+		program := parseInput(t, tt.input)
 		actual := program.String()
 		if actual != tt.expected {
 			t.Errorf("expected=%q, got=%q", tt.expected, actual)
@@ -261,19 +216,8 @@ func TestLocalDeclarationStatement(t *testing.T) {
 	}
 
 	for _, tt := range localTests {
-		tokens, err := token.TokenizeProgram(tt.input)
-		if err != nil {
-			t.Errorf("%s", err.Error())
-			return
-		}
-		parser := NewParser(tokens)
-		program := parser.ParseProgram()
-		checkParserErrors(t, parser)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
-				1, len(program.Statements))
-		}
+		program := parseInput(t, tt.input)
+		requireExactlyOneStatement(t, program)
 
 		stmt, ok := program.Statements[0].(*ast.VariableDeclaration)
 		if !ok {
@@ -301,19 +245,8 @@ func TestBooleanExpression(t *testing.T) {
 	}
 
 	for _, tt := range booleanTests {
-		tokens, err := token.TokenizeProgram(tt.input)
-		if err != nil {
-			t.Errorf("%s", err.Error())
-			return
-		}
-		parser := NewParser(tokens)
-		program := parser.ParseProgram()
-		checkParserErrors(t, parser)
-
-		if len(program.Statements) != 1 {
-			t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
-				1, len(program.Statements))
-		}
+		program := parseInput(t, tt.input)
+		requireExactlyOneStatement(t, program)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 		if !ok {
@@ -420,23 +353,8 @@ func testInfixExpression(t *testing.T, exp ast.Expression, left interface{},
 func TestIfExpression(t *testing.T) {
 	input := `if (x < y) { x }`
 
-	tokens, errors := token.TokenizeProgram(input)
-	if errors != nil {
-		t.Fatalf("Error tokenizing program")
-	}
-
-	if len(tokens) < 1 {
-		t.Fatalf("No tokens detected")
-	}
-
-	parser := NewParser(tokens)
-	program := parser.ParseProgram()
-	checkParserErrors(t, parser)
-
-	if len(program.Statements) != 1 {
-		t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
-			1, len(program.Statements))
-	}
+	program := parseInput(t, input)
+	requireExactlyOneStatement(t, program)
 
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
@@ -490,30 +408,22 @@ func TestSharedDeclarations(t *testing.T) {
 		{"ready = false;", "ready", "false"},
 	}
 
-	tokens, errors := token.TokenizeProgram(input)
-	if errors != nil {
-		t.Fatalf("Error tokenizing program")
-	}
-	if len(tokens) < 1 {
-		t.Fatalf("No tokens detected")
-	}
+	program := parseInput(t, input)
+	requireExactlyOneStatement(t, program)
 
-	parser := NewParser(tokens)
-	program := parser.ParseProgram()
-	checkParserErrors(t, parser)
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 
-	if len(program.Statements) != 1 {
-		t.Fatalf("program.Statements does not contain %d statements. got=%d\n",
-			1, len(program.Statements))
-	}
-
-	stmt, ok := program.Statements[0].(*ast.SharedBlock)
 	if !ok {
-		t.Fatalf("program.Statements[0] is not ast.SharedBlock. got=%T",
+		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T",
 			program.Statements[0])
 	}
 
-	for i, declaration := range stmt.Declarations {
+	exp, ok := stmt.Expression.(*ast.SharedBlock)
+	if !ok {
+		t.Fatalf("expression is not ast.SharedBlock. got=%T", stmt.Expression)
+	}
+
+	for i, declaration := range exp.Declarations {
 		if declaration.Name.String() != variables[i].name {
 			t.Fatalf("exp.Name is not '%s'. got=%s", variables[i].name, declaration.Name.String())
 		}

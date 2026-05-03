@@ -84,6 +84,7 @@ func NewParser(tokens []token.Token) *Parser {
 	parser.registerPrefix(token.TRUE, parser.parseBoolean)
 	parser.registerPrefix(token.FALSE, parser.parseBoolean)
 	parser.registerPrefix(token.IF, parser.parseIfExpression)
+	parser.registerPrefix(token.SHARED, parser.parseSharedBlock)
 
 	parser.infixParseFns = make(map[token.TokenType]infixParseFn)
 	parser.registerInfix(token.PLUS, parser.parseInfixExpression)
@@ -115,11 +116,9 @@ func (p *Parser) ParseProgram() ast.Program {
 func (p *Parser) parseStatement() ast.Statement {
 	tok := p.peekN(0)
 	switch tok.Type {
-	case token.SHARED:
-		return nil
 	case token.LOCAL:
 		p.advance()
-		return p.parseLocalVarDecl()
+		return p.parseVarDecl(true)
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -165,15 +164,26 @@ func (p *Parser) noPrefixParseFnError(t token.TokenType) {
 	p.errors = append(p.errors, msg)
 }
 
-func (p *Parser) parseSharedBlock() *ast.SharedBlock {
-	//stmt := &ast.SharedBlock{Token: p.peekN(0)}
-	p.advance()
+func (p *Parser) parseSharedBlock() ast.Expression {
 	tok := p.peekN(0)
+	expr := &ast.SharedBlock{Token: tok}
+	expr.Declarations = []*ast.VariableDeclaration{}
 
-	if tok.Type != token.LBRACKET {
+	if !p.peekNtokenIs(1, token.LBRACE) {
 		return nil
 	}
-	return nil
+	p.advance()
+	p.advance()
+
+	for !p.peekNtokenIs(0, token.RBRACE) && !p.peekNtokenIs(0, token.EOF) {
+		stmt := p.parseVarDecl(false)
+		if stmt != nil {
+			expr.Declarations = append(expr.Declarations, stmt)
+		}
+		p.advance()
+	}
+
+	return expr
 }
 
 func (p *Parser) parseIfExpression() ast.Expression {
@@ -243,8 +253,8 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	return block
 }
 
-func (p *Parser) parseLocalVarDecl() *ast.VariableDeclaration {
-	stmt := &ast.VariableDeclaration{Local: true}
+func (p *Parser) parseVarDecl(local bool) *ast.VariableDeclaration {
+	stmt := &ast.VariableDeclaration{Local: local}
 
 	tok := p.peekN(0)
 

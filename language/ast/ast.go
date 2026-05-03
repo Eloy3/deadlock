@@ -193,7 +193,7 @@ type SharedBlock struct {
 	Declarations []*VariableDeclaration
 }
 
-func (sb *SharedBlock) stmt()                {}
+func (sb *SharedBlock) expr()                {}
 func (sb *SharedBlock) TokenLiteral() string { return sb.Token.Literal }
 func (sb *SharedBlock) String() string {
 	var s strings.Builder

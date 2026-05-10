@@ -223,16 +223,16 @@ func (md *MutexStatement) String() string {
 	return out.String()
 }
 
-type IfStatement struct {
+type IfExpression struct {
 	Token       token.Token
 	Condition   Expression
 	Consequence *BlockStatement
 	Alternative *BlockStatement // for else
 }
 
-func (is *IfStatement) stmt()                {}
-func (is *IfStatement) TokenLiteral() string { return is.Token.Literal }
-func (is *IfStatement) String() string {
+func (is *IfExpression) expr()                {}
+func (is *IfExpression) TokenLiteral() string { return is.Token.Literal }
+func (is *IfExpression) String() string {
 	var out bytes.Buffer
 	out.WriteString("if ")
 	out.WriteString(safeExprString(is.Condition))
@@ -278,51 +278,20 @@ func (ps *PrintStmt) stmt()                {}
 func (ps *PrintStmt) TokenLiteral() string { return ps.Token.Literal }
 func (ps *PrintStmt) String() string       { return "print(" + safeExprString(ps.Value) + ")" }
 
-type ThreadDecl struct {
+type ThreadExpression struct {
 	Token token.Token
-	Name  string
-	Body  []Statement
+	Name  *Identifier
+	Body  *BlockStatement
 }
 
-func (td *ThreadDecl) stmt()                {}
-func (td *ThreadDecl) TokenLiteral() string { return td.Token.Literal }
-func (td *ThreadDecl) String() string {
+func (td *ThreadExpression) expr()                {}
+func (td *ThreadExpression) TokenLiteral() string { return td.Token.Literal }
+func (td *ThreadExpression) String() string {
 	var s strings.Builder
 	s.WriteString("thread ")
-	s.WriteString(td.Name)
+	s.WriteString(td.Name.Value)
 	s.WriteString(" {\n")
-	for _, stmt := range td.Body {
-		s.WriteString("\t")
-		s.WriteString(stmt.String())
-		s.WriteString("\n")
-	}
+	s.WriteString(td.Body.String())
 	s.WriteString("}")
 	return s.String()
-}
-
-type IfExpression struct {
-	Token       token.Token // The 'if' token
-	Condition   Expression
-	Consequence *BlockStatement
-	Alternative *BlockStatement
-}
-
-func (ie *IfExpression) expr() {}
-
-func (ie *IfExpression) TokenLiteral() string { return ie.Token.Literal }
-
-func (ie *IfExpression) String() string {
-	var out bytes.Buffer
-
-	out.WriteString("if")
-	out.WriteString(ie.Condition.String())
-	out.WriteString(" ")
-	out.WriteString(ie.Consequence.String())
-
-	if ie.Alternative != nil {
-		out.WriteString("else ")
-		out.WriteString(ie.Alternative.String())
-	}
-
-	return out.String()
 }

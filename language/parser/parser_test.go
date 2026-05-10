@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func checkParserErrors(t *testing.T, p *Parser) {
@@ -201,6 +203,27 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		if actual != tt.expected {
 			t.Errorf("expected=%q, got=%q", tt.expected, actual)
 		}
+	}
+}
+
+func TestAssignmentExpressions(t *testing.T) {
+
+	assert := assert.New(t)
+
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"x = 5;", "x=5"},
+		{"y = true;", "y=true"},
+		{"foobar = y;", "foobar=y"},
+	}
+
+	for _, tt := range tests {
+		program := parseInput(t, tt.input)
+		requireExactlyOneStatement(t, program)
+
+		assert.Equal(tt.expected, program.String())
 	}
 }
 

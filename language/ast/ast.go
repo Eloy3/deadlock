@@ -245,10 +245,50 @@ func (is *IfExpression) String() string {
 	return out.String()
 }
 
-type Assignment struct {
-	Name   string
-	Value  Expression
-	Shared bool
+type AssignmentExpression struct {
+	Token token.Token // The = token
+	Left  Expression
+	Value Expression
+}
+
+func (ae *AssignmentExpression) expr() {}
+
+// TokenLiteral prints the literal value of the token associated with this node
+func (ae *AssignmentExpression) TokenLiteral() string { return ae.Token.Literal }
+
+// String returns a stringified version of the AST for debugging
+func (ae *AssignmentExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(ae.Left.String())
+	out.WriteString(ae.TokenLiteral())
+	out.WriteString(ae.Value.String())
+
+	return out.String()
+}
+
+type IndexExpression struct {
+	Token token.Token // The [ token
+	Left  Expression
+	Index Expression
+}
+
+func (ie *IndexExpression) expr() {}
+
+// TokenLiteral prints the literal value of the token associated with this node
+func (ie *IndexExpression) TokenLiteral() string { return ie.Token.Literal }
+
+// String returns a stringified version of the AST for debugging
+func (ie *IndexExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(ie.Left.String())
+	out.WriteString("[")
+	out.WriteString(ie.Index.String())
+	out.WriteString("])")
+
+	return out.String()
 }
 
 type LockStmt struct {

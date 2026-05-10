@@ -99,6 +99,8 @@ func NewParser(tokens []token.Token) *Parser {
 	parser.registerInfix(token.GREATER_EQ, parser.parseInfixExpression)
 	parser.registerInfix(token.LESS_GREATER_EQ, parser.parseInfixExpression)
 
+	parser.registerInfix(token.ASSIGN, parser.parseAssignmentExpression)
+
 	return parser
 }
 
@@ -282,6 +284,24 @@ func (p *Parser) parseVarDecl(local bool) *ast.VariableDeclaration {
 	}
 
 	return stmt
+}
+
+func (p *Parser) parseAssignmentExpression(exp ast.Expression) ast.Expression {
+	switch node := exp.(type) {
+	case *ast.Identifier, *ast.IndexExpression:
+	default:
+		msg := fmt.Sprintf("expected identifier or index expression on left but got %T %#v", node, exp)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+
+	ae := &ast.AssignmentExpression{Token: p.peekN(0), Left: exp}
+
+	p.advance()
+
+	ae.Value = p.parseExpression(LOWEST)
+
+	return ae
 }
 
 func (p *Parser) parseMutex() *ast.MutexStatement {

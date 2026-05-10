@@ -124,7 +124,10 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseVarDecl(true)
 
 	case token.MUTEX:
-		return p.parseMutex()
+		return p.parseMutexStatement()
+
+	case token.LOCK:
+		return p.parseLockStatement()
 
 	default:
 		return p.parseExpressionStatement()
@@ -304,7 +307,7 @@ func (p *Parser) parseAssignmentExpression(exp ast.Expression) ast.Expression {
 	return ae
 }
 
-func (p *Parser) parseMutex() *ast.MutexStatement {
+func (p *Parser) parseMutexStatement() *ast.MutexStatement {
 	tok := p.peekN(0)
 
 	stmt := &ast.MutexStatement{Token: tok}
@@ -343,6 +346,35 @@ func (p *Parser) parseThread() ast.Expression {
 	expr.Body = p.parseBlockStatement()
 
 	return expr
+}
+
+func (p *Parser) parseLockStatement() *ast.LockStatement {
+	tok := p.peekN(0)
+
+	stmt := &ast.LockStatement{Token: tok}
+
+	if !p.peekNtokenIs(1, token.LPAREN) {
+		return nil
+	}
+	p.advance() // move to token '('
+
+	if !p.peekNtokenIs(1, token.IDENTIFIER) {
+		return nil
+	}
+	p.advance()
+	stmt.Argument = p.parseIdentifier().(*ast.Identifier)
+
+	if !p.peekNtokenIs(1, token.RPAREN) {
+		return nil
+	}
+	p.advance() // move to token ')'
+
+	if !p.peekNtokenIs(1, token.COLON) {
+		return nil
+	}
+	p.advance()
+
+	return stmt
 }
 
 func (p *Parser) parseIdentifier() ast.Expression {

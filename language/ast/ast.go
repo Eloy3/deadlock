@@ -291,23 +291,23 @@ func (ie *IndexExpression) String() string {
 	return out.String()
 }
 
-type LockStmt struct {
-	Token token.Token
-	Name  string
+type LockStatement struct {
+	Token    token.Token
+	Argument *Identifier
 }
 
-func (ls *LockStmt) stmt()                {}
-func (ls *LockStmt) TokenLiteral() string { return ls.Token.Literal }
-func (ls *LockStmt) String() string       { return "lock(" + ls.Name + ")" }
+func (ls *LockStatement) stmt()                {}
+func (ls *LockStatement) TokenLiteral() string { return ls.Token.Literal }
+func (ls *LockStatement) String() string       { return "lock(" + ls.Argument.Value + ")" }
 
-type UnlockStmt struct {
-	Token token.Token
-	Name  string
+type UnlockStatement struct {
+	Token    token.Token
+	Argument *Identifier
 }
 
-func (us *UnlockStmt) stmt()                {}
-func (us *UnlockStmt) TokenLiteral() string { return us.Token.Literal }
-func (us *UnlockStmt) String() string       { return "unlock(" + us.Name + ")" }
+func (us *UnlockStatement) stmt()                {}
+func (us *UnlockStatement) TokenLiteral() string { return us.Token.Literal }
+func (us *UnlockStatement) String() string       { return "unlock(" + us.Argument.Value + ")" }
 
 type PrintStmt struct {
 	Token token.Token

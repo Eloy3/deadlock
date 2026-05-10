@@ -85,6 +85,7 @@ func NewParser(tokens []token.Token) *Parser {
 	parser.registerPrefix(token.FALSE, parser.parseBoolean)
 	parser.registerPrefix(token.IF, parser.parseIfExpression)
 	parser.registerPrefix(token.SHARED, parser.parseSharedBlock)
+	parser.registerPrefix(token.THREAD, parser.parseThread)
 
 	parser.infixParseFns = make(map[token.TokenType]infixParseFn)
 	parser.registerInfix(token.PLUS, parser.parseInfixExpression)
@@ -300,6 +301,28 @@ func (p *Parser) parseMutex() *ast.MutexStatement {
 	}
 
 	return stmt
+}
+
+func (p *Parser) parseThread() ast.Expression {
+	tok := p.peekN(0)
+
+	expr := &ast.ThreadExpression{Token: tok}
+
+	if !p.peekNtokenIs(1, token.IDENTIFIER) {
+		return nil
+	}
+	tok = p.advance()
+
+	expr.Name = &ast.Identifier{Token: tok, Value: tok.Literal}
+
+	if !p.peekNtokenIs(1, token.LBRACE) {
+		return nil
+	}
+	p.advance()
+
+	expr.Body = p.parseBlockStatement()
+
+	return expr
 }
 
 func (p *Parser) parseIdentifier() ast.Expression {

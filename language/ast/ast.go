@@ -207,14 +207,14 @@ func (sb *SharedBlock) String() string {
 	return s.String()
 }
 
-type MutexDecl struct {
+type MutexStatement struct {
 	Token token.Token
 	Name  *Identifier
 }
 
-func (md *MutexDecl) stmt()                {}
-func (md *MutexDecl) TokenLiteral() string { return md.Token.Literal }
-func (md *MutexDecl) String() string {
+func (md *MutexStatement) stmt()                {}
+func (md *MutexStatement) TokenLiteral() string { return md.Token.Literal }
+func (md *MutexStatement) String() string {
 	var out bytes.Buffer
 	out.WriteString("mutex ")
 	if md.Name != nil {

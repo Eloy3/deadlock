@@ -429,3 +429,50 @@ func TestSharedDeclarations(t *testing.T) {
 		}
 	}
 }
+
+func TestMutexStatement(t *testing.T) {
+	input := `mutex m;`
+
+	program := parseInput(t, input)
+	requireExactlyOneStatement(t, program)
+
+	stmt, ok := program.Statements[0].(*ast.MutexStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.MutexStatement. got=%T",
+			program.Statements[0])
+	}
+
+	if !testIdentifier(t, stmt.Name, "m") {
+		return
+	}
+}
+
+func TestThreadExpression(t *testing.T) {
+	input := `thread incrementer {
+
+				local temp = 0;
+
+				temp = counter;
+				temp = temp + 1;
+				counter = temp;
+			}`
+
+	program := parseInput(t, input)
+	requireExactlyOneStatement(t, program)
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T",
+			program.Statements[0])
+	}
+
+	exp, ok := stmt.Expression.(*ast.ThreadExpression)
+	if !ok {
+		t.Fatalf("stmt.Expression is not ast.ThreadExpression. got=%T",
+			stmt.Expression)
+	}
+
+	if !testIdentifier(t, exp.Name, "incrementer") {
+		return
+	}
+}

@@ -119,6 +119,10 @@ func (p *Parser) parseStatement() ast.Statement {
 	case token.LOCAL:
 		p.advance()
 		return p.parseVarDecl(true)
+
+	case token.MUTEX:
+		return p.parseMutex()
+
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -273,6 +277,25 @@ func (p *Parser) parseVarDecl(local bool) *ast.VariableDeclaration {
 	stmt.Value = p.parseExpression(LOWEST)
 
 	for !p.peekNtokenIs(0, token.SEMICOLON) {
+		p.advance()
+	}
+
+	return stmt
+}
+
+func (p *Parser) parseMutex() *ast.MutexStatement {
+	tok := p.peekN(0)
+
+	stmt := &ast.MutexStatement{Token: tok}
+
+	if !p.peekNtokenIs(1, token.IDENTIFIER) {
+		return nil
+	}
+	tok = p.advance()
+
+	stmt.Name = &ast.Identifier{Token: tok, Value: tok.Literal}
+
+	if p.peekNtokenIs(1, token.SEMICOLON) {
 		p.advance()
 	}
 

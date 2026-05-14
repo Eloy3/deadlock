@@ -3,6 +3,7 @@ package ast
 import (
 	"bytes"
 	"deadlock/language/token"
+	"fmt"
 	"strings"
 )
 
@@ -334,4 +335,138 @@ func (td *ThreadExpression) String() string {
 	s.WriteString(td.Body.String())
 	s.WriteString("}")
 	return s.String()
+}
+
+// PrintTree prints the AST as a tree structure for debugging
+func (p *Program) PrintTree() {
+	fmt.Println("Program")
+	for i, stmt := range p.Statements {
+		isLast := i == len(p.Statements)-1
+		printNodeTree(stmt, "", isLast)
+	}
+}
+
+func printNodeTree(node Node, indent string, isLast bool) {
+	var prefix string
+	if isLast {
+		prefix = indent + "└── "
+		indent = indent + "    "
+	} else {
+		prefix = indent + "├── "
+		indent = indent + "│   "
+	}
+
+	switch n := node.(type) {
+	case *VariableDeclaration:
+		fmt.Printf("%s%T (name=%s)\n", prefix, n, n.Name.Value)
+		if n.Value != nil {
+			printExprTree(n.Value, indent, true)
+		}
+
+	case *MutexStatement:
+		fmt.Printf("%s%T (name=%s)\n", prefix, n, n.Name.Value)
+
+	case *ExpressionStatement:
+		fmt.Printf("%s%T\n", prefix, n)
+		if n.Expression != nil {
+			printExprTree(n.Expression, indent, true)
+		}
+
+	case *BlockStatement:
+		fmt.Printf("%sBlockStatement (%d statements)\n", prefix, len(n.Statements))
+		for i, stmt := range n.Statements {
+			printNodeTree(stmt, indent, i == len(n.Statements)-1)
+		}
+
+	default:
+		fmt.Printf("%s%T\n", prefix, n)
+	}
+}
+
+func printExprTree(expr Expression, indent string, isLast bool) {
+	var prefix string
+	if isLast {
+		prefix = indent + "└── "
+		indent = indent + "    "
+	} else {
+		prefix = indent + "├── "
+		indent = indent + "│   "
+	}
+
+	switch e := expr.(type) {
+	case *Identifier:
+		fmt.Printf("%sIdentifier (value=%s)\n", prefix, e.Value)
+
+	case *IntegerLiteral:
+		fmt.Printf("%sIntegerLiteral (value=%d)\n", prefix, e.Value)
+
+	case *StringLiteral:
+		fmt.Printf("%sStringLiteral (value=%s)\n", prefix, e.Value)
+
+	case *Boolean:
+		fmt.Printf("%sBoolean (value=%v)\n", prefix, e.Value)
+
+	case *PrefixExpression:
+		fmt.Printf("%sPrefixExpression (op=%s)\n", prefix, e.Operator)
+		if e.Right != nil {
+			printExprTree(e.Right, indent, true)
+		}
+
+	case *InfixExpression:
+		fmt.Printf("%sInfixExpression (op=%s)\n", prefix, e.Operator)
+		if e.Left != nil {
+			printExprTree(e.Left, indent, false)
+		}
+		if e.Right != nil {
+			printExprTree(e.Right, indent, true)
+		}
+
+	case *IfExpression:
+		fmt.Printf("%sIfExpression\n", prefix)
+		if e.Condition != nil {
+			fmt.Printf("%s├── Condition:\n", indent)
+			printExprTree(e.Condition, indent+"│   ", false)
+		}
+		if e.Consequence != nil {
+			fmt.Printf("%s├── Consequence:\n", indent)
+			printNodeTree(e.Consequence, indent+"│   ", e.Alternative == nil)
+		}
+		if e.Alternative != nil {
+			fmt.Printf("%s└── Alternative:\n", indent)
+			printNodeTree(e.Alternative, indent+"    ", true)
+		}
+
+	case *AssignmentExpression:
+		fmt.Printf("%sAssignmentExpression\n", prefix)
+		if e.Left != nil {
+			printExprTree(e.Left, indent, false)
+		}
+		if e.Value != nil {
+			printExprTree(e.Value, indent, true)
+		}
+
+	case *IndexExpression:
+		fmt.Printf("%sIndexExpression\n", prefix)
+		if e.Left != nil {
+			printExprTree(e.Left, indent, false)
+		}
+		if e.Index != nil {
+			printExprTree(e.Index, indent, true)
+		}
+
+	case *SharedBlock:
+		fmt.Printf("%sSharedBlock (%d declarations)\n", prefix, len(e.Declarations))
+		for i, decl := range e.Declarations {
+			printNodeTree(decl, indent, i == len(e.Declarations)-1)
+		}
+
+	case *ThreadExpression:
+		fmt.Printf("%sThreadExpression (name=%s)\n", prefix, e.Name.Value)
+		if e.Body != nil {
+			printNodeTree(e.Body, indent, true)
+		}
+
+	default:
+		fmt.Printf("%s%T\n", prefix, e)
+	}
 }

@@ -40,5 +40,8 @@ func main() {
 	}
 
 	parser := parser.NewParser(tokens)
-	parser.ParseProgram()
+	program := parser.ParseProgram()
+
+	fmt.Println("\n=== AST Tree ===")
+	program.PrintTree()
 }

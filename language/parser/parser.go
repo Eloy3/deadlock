@@ -129,6 +129,9 @@ func (p *Parser) parseStatement() ast.Statement {
 	case token.LOCK:
 		return p.parseLockStatement()
 
+	case token.UNLOCK:
+		return p.parseUnlockStatement()
+
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -273,16 +276,16 @@ func (p *Parser) parseVarDecl(local bool) *ast.VariableDeclaration {
 	}
 
 	stmt.Name = &ast.Identifier{Token: tok, Value: tok.Literal}
-	p.advance()
 
-	if !p.peekNtokenIs(0, token.ASSIGN) {
+	if !p.peekNtokenIs(1, token.ASSIGN) {
 		return nil
 	}
+	p.advance()
 	p.advance()
 
 	stmt.Value = p.parseExpression(LOWEST)
 
-	for !p.peekNtokenIs(0, token.SEMICOLON) {
+	if p.peekNtokenIs(1, token.SEMICOLON) {
 		p.advance()
 	}
 
@@ -369,10 +372,37 @@ func (p *Parser) parseLockStatement() *ast.LockStatement {
 	}
 	p.advance() // move to token ')'
 
-	if !p.peekNtokenIs(1, token.COLON) {
+	if p.peekNtokenIs(1, token.SEMICOLON) {
+		p.advance()
+	}
+
+	return stmt
+}
+
+func (p *Parser) parseUnlockStatement() *ast.UnlockStatement {
+	tok := p.peekN(0)
+
+	stmt := &ast.UnlockStatement{Token: tok}
+
+	if !p.peekNtokenIs(1, token.LPAREN) {
+		return nil
+	}
+	p.advance() // move to token '('
+
+	if !p.peekNtokenIs(1, token.IDENTIFIER) {
 		return nil
 	}
 	p.advance()
+	stmt.Argument = p.parseIdentifier().(*ast.Identifier)
+
+	if !p.peekNtokenIs(1, token.RPAREN) {
+		return nil
+	}
+	p.advance() // move to token ')'
+
+	if p.peekNtokenIs(1, token.SEMICOLON) {
+		p.advance()
+	}
 
 	return stmt
 }

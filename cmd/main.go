@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"deadlock/language/parser"
+	"deadlock/language/semantic"
 	"deadlock/language/token"
 )
 
@@ -14,7 +15,7 @@ func main() {
 	dir, _ := os.Getwd()
 	fmt.Println("Working directory:", dir)
 
-	f, err := os.Open("../simdata/examples/example02.dlk")
+	f, err := os.Open("/home/karthala/repos/deadlock/simdata/examples/example02.dlk")
 	if err != nil {
 		fmt.Println("Error opening file:", err)
 		return
@@ -44,4 +45,20 @@ func main() {
 
 	fmt.Println("\n=== AST Tree ===")
 	program.PrintTree()
+
+	// Perform semantic analysis
+	fmt.Println("\n=== Semantic Analysis ===")
+	symTable, errList := semantic.AnalyzeProgram(&program)
+
+	if errList.HasErrors() {
+		fmt.Println("Semantic errors found:")
+		for i, err := range errList {
+			fmt.Printf("  %d. %s\n", i+1, err)
+		}
+		return
+	}
+
+	fmt.Println("Semantic analysis passed!")
+	fmt.Println("\n=== Symbol Table ===")
+	fmt.Println(symTable.String())
 }
